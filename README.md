@@ -1,0 +1,2 @@
+# clm_show_hide_js
+HTMLテーブルに列表示切替機能を組み込むJSクラス

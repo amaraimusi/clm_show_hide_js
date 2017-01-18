@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<meta name="google" content="notranslate" />
+   	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+   	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>clm_show_hide.js</title>
+	
+	<link href="http://code.jquery.com/ui/1.12.1/themes/cupertino/jquery-ui.min.css" rel="stylesheet">
+	<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+	<link href="example/example.css" rel="stylesheet">
+	<link href="clm_show_hide.css" rel="stylesheet">
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+	<script src="http://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+	<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<script src="example/livipage.js"></script>
+	<script src="clm_show_hide.js"></script>
+
+		<script>
+		$(function() {
+			//▽列表示切替機能の初期化
+			var iniClmData=[1,1,0,0,0,1];// 1:初期表示   0:初期非表示
+			var csh=new ClmShowHide();
+			csh.init('tbl1','clm_cbs',iniClmData,'sample_xxx');// テーブルID,チェックボックス区分ID,初期パラメータ,画面毎に異なる任意の値
+		});
+		</script>
+		
+</head>
+<body>
+<div id="header" ><h1>clm_show_hide.js</h1>
+	<p>HTMLテーブルに列表示切替機能を組み込むJSクラス</p>
+</div>
+<div class="container">
+
+
+
+
+
+
+
+
+
+
+<a href="https://github.com/amaraimusi/clm_show_hide_js">GitHub</a><br>
+<br>
+
+<h2>Example 1</h2>
+<div id="clm_cbs">列表示切替</div>
+<div style="clear:both"></div>
+<table id="tbl1" border="1" ><thead>
+	<tr>
+		<th>Id</th>
+		<th>名</th>
+		<th>国</th>
+		<th>生年</th>
+		<th>没年</th>
+		<th>活躍年</th>
+	</tr></thead>
+	<tbody>
+		<tr>
+			<td>1</td>
+			<td><div contenteditable="true" >ナポレオン</div></td>
+			<td><div contenteditable="true" >フランス</div></td>
+			<td>1769</td>
+			<td>1821</td>
+			<td>1798</td>
+			</tr>
+		<tr>
+			<td>2</td>
+			<td class="h_name">マリア・テレジア</td>
+			<td><div style="width:100%" contenteditable="true" >リトアニア</div></td>
+			<td>1717</td>
+			<td>1780</td>
+			<td>1740</td>
+			</tr>
+		<tr>
+			<td>3</td>
+			<td class="h_name">エリザベス1世</td>
+			<td>イギリス</td>
+			<td>1533</td>
+			<td>1603</td>
+			<td>1560</td>
+			</tr>
+		<tr>
+			<td>4</td>
+			<td class="h_name">アールパード</td>
+			<td>ハンガリー</td>
+			<td>845</td>
+			<td>907</td>
+			<td>896</td>
+			</tr>
+
+	</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="yohaku"></div>
+</div><!-- content -->
+<div id="footer">(C) <a href="http://amaraimusi.sakura.ne.jp/" target="blank">kenji uehara</a>2015-5-8 | 2017-1-18</div>
+</body>
+</html>

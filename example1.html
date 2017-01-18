@@ -21,7 +21,7 @@
 		<script>
 		$(function() {
 			//▽列表示切替機能の初期化
-			var iniClmData=[1,1,0,0,0,1];// 1:初期表示   0:初期非表示
+			var iniClmData=[-1,1,-1,0,0,1];// -1:機能無効  1:表示   0:非表示
 			var csh=new ClmShowHide();
 			csh.init('tbl1','clm_cbs',iniClmData,'sample_xxx');// テーブルID,チェックボックス区分ID,初期パラメータ,画面毎に異なる任意の値
 		});

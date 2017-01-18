@@ -8,12 +8,14 @@
  * - init 初期化
  * - refresh 一覧テーブルをリフレッシュする
  * 
- * @version 1.3.1
+ * @version 1.4
  * 
  * @date 2015-5-8 新規作成
  * @date 2015-11-24 「列表示を保存」ボタン押下後のメッセージ方式を修正。
  * @date 2015-11-27 テーブルを再構築するrefreshメソッドを追加
  * @date 2016-1-22 getCshAryメソッドを追加
+ * @date 2017-1-18 機能無効の列に対応
+ * 
  * 
  * @author k-uehara 
  */
@@ -36,8 +38,8 @@ var ClmShowHide =function(){
 	 * 初期化
 	 * @param tblId 対象テーブルのID属性
 	 * @param chBoxsId 列表示切替チェックボックス群を出力する要素を指定
-	 * @param iniClmData 初期列表示配列 例→iniClmData=[1,1,0,0,0,1];// 1:初期表示   0:初期非表示
-	 * @param unique 画面毎に異なる一意なコード。省略時はtblIdを使用する。
+	 * @param iniClmData 初期列表示配列 例→iniClmData=[-1,1,0,0,0,1];// -1:機能無効  0:非表示  1:表示
+	 * @param unique 画面毎に異なる一意なコード。省略時は引数tblIdを使用する。
 	 *
 	 */
 	this.init=function(tblId,chBoxsId,iniClmData,unique){
@@ -62,7 +64,15 @@ var ClmShowHide =function(){
 			clmData={};
 			for(var i=0;i < iniClmData.length ;i++){
 				var show_flg=iniClmData[i];
-				var clm_ent={'clm_name':null,'show_flg':show_flg};
+				
+				// 機能無効の列
+				var disabled = 0;
+				if(show_flg==-1){
+					show_flg = 1;
+					disabled = 1
+				}
+				
+				var clm_ent={'clm_name':null,'show_flg':show_flg,'disabled':disabled};
 				clmData[i]=clm_ent;
 			}
 		}else{
@@ -288,7 +298,12 @@ var ClmShowHide =function(){
 		var cbs=$("#" + chBoxsId);
 		cbs.empty();
 		for (var i in clmData) {
+			
 			var clm_ent=clmData[i];
+			
+			if(clm_ent.disabled == 1){
+				continue;
+			}
 
 			var checked='';
 			if(clm_ent['show_flg']==1){

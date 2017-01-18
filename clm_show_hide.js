@@ -8,13 +8,7 @@
  * - init 初期化
  * - refresh 一覧テーブルをリフレッシュする
  * 
- * @version 1.4
- * 
- * @date 2015-5-8 新規作成
- * @date 2015-11-24 「列表示を保存」ボタン押下後のメッセージ方式を修正。
- * @date 2015-11-27 テーブルを再構築するrefreshメソッドを追加
- * @date 2016-1-22 getCshAryメソッドを追加
- * @date 2017-1-18 機能無効の列に対応
+ * @version 1.5
  * 
  * 
  * @author k-uehara 
@@ -24,15 +18,16 @@ var ClmShowHide =function(){
 
 	/// コールバック関数用
 	var my=this;
-
-	/// デフォルト列データ
-	this.defClmData=[];
 	
 	/// プロパティ
 	this.props={};
+
+	/// デフォルト列データ
+	this.defClmData={};
 	
-	/// 初期列表示配列
-	this.iniClmData={};
+	// アクティブ列データ
+	this.actClmData={};
+	
 	
 	/**
 	 * 初期化
@@ -48,43 +43,31 @@ var ClmShowHide =function(){
 		this.props['tblId']=tblId;
 		this.props['chBoxsId']=chBoxsId;
 		this.props['unique']=unique;
-		this.iniClmData = iniClmData;
-		
+
 
 		if(unique==null){
 			unique=tblId;
 		}
+		
+		// デフォルト列データを作成する
+		defClmData=[];
+		for(var i=0;i < iniClmData.length ;i++){
+			var show_flg=iniClmData[i];
 
-		var storage = localStorage;
+			var clm_ent={'clm_name':null,'show_flg':show_flg};
+			defClmData[i]=clm_ent;
+			
 
-		//列データをストレージから取得する。ストレージになければ初期列表示配列をセット
-		var j_clmData=storage.getItem(unique + '_clmData');
-		var clmData={};//列データ
-		if(j_clmData =='' || j_clmData==null){
-			clmData={};
-			for(var i=0;i < iniClmData.length ;i++){
-				var show_flg=iniClmData[i];
-				
-				// 機能無効の列
-				var disabled = 0;
-				if(show_flg==-1){
-					show_flg = 1;
-					disabled = 1
-				}
-				
-				var clm_ent={'clm_name':null,'show_flg':show_flg,'disabled':disabled};
-				clmData[i]=clm_ent;
-			}
-		}else{
-			clmData=JSON.parse(j_clmData);
 		}
-
+		
+		
+		// テーブルヘッダー要素から列名を取得して、デフォルト列データにセットする。
 		var i=0;
 		$.each($('#' + tblId + " thead tr th"), function() {
 
 			var clm_name=$(this).html();
 			try{
-				clmData[i]['clm_name']=clm_name;
+				defClmData[i]['clm_name']=clm_name;
 			}catch( e ){
 				  return;
 			}
@@ -92,11 +75,31 @@ var ClmShowHide =function(){
 			i++;
 		});
 
-		this.defClmData = clmData;//メンバに列データをセット
+
+		// ローカルストレージから列JSONを取得する
+		var j_clmData=localStorage.getItem(unique + '_clmData');
+		
+
+		
+		// ローカルストレージに列JSONが存在しない場合、デフォルトをアクティブ列データにコピーする
+		var actClmData={};// アクティブ列データ
+		if(j_clmData =='' || j_clmData==null){
+			actClmData = $.extend(true, {}, defClmData);
+		}
+		
+		// ローカルストレージに列JSONが存在する場合、列JSONをパースしてアクティブ列データにセットする
+		else{
+			actClmData=JSON.parse(j_clmData);
+		}
+
+
+		// メンバへ列データをセットする
+		this.defClmData = defClmData;
+		this.actClmData = actClmData;
 
 
 		//列表示チェックボックスを作成
-		this.createClmShowCheckBox_csh(tblId,chBoxsId,clmData);
+		createClmShowCheckBox_csh(tblId,chBoxsId,actClmData);
 
 
 		//列表示チェックボックスのクリックイベント。
@@ -115,11 +118,11 @@ var ClmShowHide =function(){
 
 
 		//列表示切替
-		for (var i in clmData) {
-			var clm_ent=clmData[i];
+		for (var i in actClmData) {
+			var clm_ent=actClmData[i];
 
 			//表示フラグ＝0ならその列を非表示にする。
-			if(clm_ent['show_flg']==0){
+			if(clm_ent.show_flg==0){
 
 				this.clm_hide_csh(tblId,i);//インデックスに紐づく列を非表示にする
 			}
@@ -128,11 +131,11 @@ var ClmShowHide =function(){
 
 
 
-		//列表示ボタンにイベントを追加。
+		//保存ボタンにイベントを追加。
 		$("#" + tblId + "_save_btn").click(function(event){
 
 			//列の表示状態をローカルストレージに保存
-			my.saveClmData(tblId,chBoxsId,unique);
+			saveClmData(tblId,chBoxsId,unique);
 
 		});
 
@@ -140,7 +143,7 @@ var ClmShowHide =function(){
 		$("#" + tblId + "_all_checked_btn").click(function(event){
 
 			//すべての列表示チェックボックスにチェックを入れる。
-			my.allChecked(tblId,chBoxsId,clmData);
+			allChecked(tblId,chBoxsId,my.actClmData);
 
 		});
 
@@ -148,7 +151,7 @@ var ClmShowHide =function(){
 		$("#" + tblId + "_default_btn").click(function(event){
 
 			//列表示チェックボックスを初期状態に戻す。
-			my.defaultClmCb(tblId,chBoxsId,iniClmData,unique);
+			defaultClmCb(tblId,chBoxsId,unique);
 
 		});
 
@@ -164,7 +167,9 @@ var ClmShowHide =function(){
 	 */
 	this.getCshAry = function(){
 		
-		chBoxsId=this.props.chBoxsId;
+		// チェックボックス群要素のjQueyオブジェクトを取得する
+		var chBox = $('#' + my.props.chBoxsId);
+		
 		
 
 		var csh_ary=[];
@@ -172,13 +177,16 @@ var ClmShowHide =function(){
 		//列表示切替チェックボックス群から列データの表示フラグにセットする。
 		for (var i in this.defClmData) {
 
-			var cb=$("#" + chBoxsId + " input[type='checkbox']").eq(i);
-			var checked= cb.prop('checked');
-
-			if(checked==true){
-				csh_ary.push(1);
-			}else{
-				csh_ary.push(0);
+			// チェックボックス要素を取得する
+			var cb = chBox.find("[index=" + i + "]");
+			if(cb[0]){
+				var checked= cb.prop('checked');
+	
+				if(checked==true){
+					csh_ary.push(1);
+				}else{
+					csh_ary.push(0);
+				}
 			}
 		}
 		
@@ -193,7 +201,7 @@ var ClmShowHide =function(){
 	this.reset=function(){
 		
 		//列表示チェックボックスを初期状態に戻す。
-		this.defaultClmCb(this.props.tblId,this.props.chBoxsId,this.iniClmData,this.props.unique);
+		defaultClmCb(this.props.tblId,this.props.chBoxsId,this.props.unique);
 
 	};
 	
@@ -210,7 +218,7 @@ var ClmShowHide =function(){
 			this.clm_show_csh(tblId,i);//列を表示
 		}
 		
-		var clmData=this.getClmDataFromCheckbox();//列表示切替チェックボックス群から列データを取得する。
+		var clmData = getClmDataFromCheckbox();//列表示切替チェックボックス群から列データを取得する。
 		
 		for (var i in clmData) {
 			
@@ -218,7 +226,7 @@ var ClmShowHide =function(){
 			
 			if(show_flg==1){
 				this.clm_show_csh(tblId,i);//列表示
-			}else{
+			}else if(show_flg==0){
 				this.clm_hide_csh(tblId,i);//列非表示
 			}
 
@@ -229,20 +237,30 @@ var ClmShowHide =function(){
 	
 
 
-	//列表示チェックボックスを初期状態に戻す。
-	this.defaultClmCb=function(tblId,chBoxsId,iniClmData,unique){
-		for(var i=0;i < iniClmData.length ;i++){
+	/**
+	 * 列表示チェックボックスを初期状態に戻す
+	 */
+	function defaultClmCb(tblId,chBoxsId,unique){
+		
+		// チェックボックス群要素のjQueyオブジェクトを取得する
+		var chBox = $('#' + my.props.chBoxsId);
+		
+		for(var i in my.defClmData){
 
-			var show_flg=iniClmData[i];
+			
+			var ent = my.defClmData[i]
+			var show_flg = ent.show_flg;
+			
+			var cb = chBox.find("[index=" + i + "]");
 
-			var cb=$("#" + chBoxsId + " input[type='checkbox']").eq(i);
-
-			if(show_flg==1){
-				cb.prop('checked',true);
-				this.clm_show_csh(tblId,i);//列表示
-			}else{
-				cb.prop('checked',false);
-				this.clm_hide_csh(tblId,i);//列非表示
+			if(cb[0]){
+				if(show_flg==1){
+					cb.prop('checked',true);
+					my.clm_show_csh(tblId,i);//列表示
+				}else if(show_flg==0){
+					cb.prop('checked',false);
+					my.clm_hide_csh(tblId,i);//列非表示
+				}
 			}
 
 
@@ -256,16 +274,26 @@ var ClmShowHide =function(){
 	};
 
 
-	//すべての列表示チェックボックスにチェックを入れる。
-	this.allChecked=function(tblId,chBoxsId,clmData){
+	/**
+	 * すべての列表示チェックボックスにチェックを入れる
+	 */
+	function allChecked(tblId,chBoxsId,clmData){
+		
+		// チェックボックス群要素のjQueyオブジェクトを取得する
+		var chBox = $('#' + my.props.chBoxsId);
+		
 		for (var i in clmData) {
 
-			var cb=$("#" + chBoxsId + " input[type='checkbox']").eq(i);
-			var checked= cb.prop('checked');
+			// チェックボックス要素を取得する
+			var cb = chBox.find("[index=" + i + "]");
 
-			if(checked==false){
-				cb.prop('checked',true);//列表示チェックボックスにチェックを入れる。
-				this.clm_show_csh(tblId,i);//列を表示
+			if(cb[0]){
+				var checked= cb.prop('checked');
+	
+				if(checked==false){
+					cb.prop('checked',true);//列表示チェックボックスにチェックを入れる。
+					my.clm_show_csh(tblId,i);//列を表示
+				}
 			}
 
 
@@ -274,17 +302,16 @@ var ClmShowHide =function(){
 	};
 
 
-	//列の表示状態をローカルストレージに保存
-	this.saveClmData=function(tblId,chBoxsId,unique){
+	/**
+	 * 列の表示状態をローカルストレージに保存
+	 */
+	function saveClmData(tblId,chBoxsId,unique){
 
-		var clmData=this.getClmDataFromCheckbox();//列表示切替チェックボックス群から列データを取得する。
-
-		var j_clmData=JSON.stringify(clmData);
-
+		var clmData = getClmDataFromCheckbox(); //列表示切替チェックボックス群から列データを取得する。
 
 		//ローカルストレージに列データを保存
-		var storage = localStorage;
-		storage.setItem(unique + '_clmData',j_clmData);
+		var j_clmData=JSON.stringify(clmData);
+		localStorage.setItem(unique + '_clmData',j_clmData);
 
 		$('#csh_msg').show();
 		$('#csh_msg').fadeOut(3000);
@@ -293,20 +320,25 @@ var ClmShowHide =function(){
 
 
 
-	//列表示チェックボックスを作成
-	this.createClmShowCheckBox_csh=function(tblId,chBoxsId,clmData){
+	/**
+	 * チェックボックス群を生成する
+	 * @param tblId テーブルのID属性
+	 * @param chBoxsId チェックボックス群要素のID属性
+	 * @param clmData 列データ
+	 */
+	function createClmShowCheckBox_csh(tblId,chBoxsId,clmData){
 		var cbs=$("#" + chBoxsId);
 		cbs.empty();
 		for (var i in clmData) {
 			
 			var clm_ent=clmData[i];
 			
-			if(clm_ent.disabled == 1){
+			if(clm_ent.show_flg == -1){
 				continue;
 			}
 
 			var checked='';
-			if(clm_ent['show_flg']==1){
+			if(clm_ent.show_flg==1){
 				checked='checked'
 			}
 
@@ -365,24 +397,32 @@ var ClmShowHide =function(){
 		});
 	};
 
-	//列表示切替チェックボックス群から列データを取得する。
-	this.getClmDataFromCheckbox = function(){
-		
-		chBoxsId=this.props.chBoxsId;
+	/**
+	 * 列表示切替チェックボックス群から列データを取得する。
+	 */
+	function getClmDataFromCheckbox(){
 
-		//デフォルト列データから、列データを複製する。（クローンコピー）
-		var clmData = $.extend(true, {}, this.defClmData);
+		// チェックボックス群要素のjQueyオブジェクトを取得する
+		var chBox = $('#' + my.props.chBoxsId);
+
+		// アクティブ列データを取得する
+		var clmData = my.actClmData;
 
 		//列表示切替チェックボックス群から列データの表示フラグにセットする。
 		for (var i in clmData) {
 
-			var cb=$("#" + chBoxsId + " input[type='checkbox']").eq(i);
-			var checked= cb.prop('checked');
-
-			if(checked==true){
-				clmData[i]['show_flg'] = 1;
-			}else{
-				clmData[i]['show_flg'] = 0;
+			// チェックボックス要素を取得する
+			var cb = chBox.find("[index=" + i + "]");
+			
+			// チェック状態を取得し、列データにセットする
+			if(cb[0]){
+				var checked= cb.prop('checked');
+	
+				if(checked==true){
+					clmData[i]['show_flg'] = 1;
+				}else{
+					clmData[i]['show_flg'] = 0;
+				}
 			}
 		}
 		

@@ -19,12 +19,18 @@
 	<script src="clm_show_hide.js"></script>
 
 		<script>
+		var csh;
 		$(function() {
 			//▽列表示切替機能の初期化
+			csh=new ClmShowHide();
 			var iniClmData=[-1,1,-1,0,0,1];// -1:機能無効  1:表示   0:非表示
-			var csh=new ClmShowHide();
 			csh.init('tbl1','clm_cbs',iniClmData,'sample_xxx');// テーブルID,チェックボックス区分ID,初期パラメータ,画面毎に異なる任意の値
 		});
+		
+		function test3(){
+			var res = csh.getCshAry();
+			console.log(res);
+		}
 		</script>
 		
 </head>
@@ -97,8 +103,12 @@
 
 
 
-
-
+<br><br>
+<div>
+	<input type="button" class="btn btn-warning btn-xs" value="reset" onclick="csh.reset()" />
+	<input type="button" class="btn btn-warning btn-xs" value="refresh" onclick="csh.refresh()" />
+	<input type="button" class="btn btn-warning btn-xs" value="getCshAry" onclick="test3()" />
+</div>
 
 
 
